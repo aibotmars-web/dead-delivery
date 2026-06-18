@@ -1011,6 +1011,8 @@ class MapComponent extends PositionComponent {
 
   bool get isLoaded => _tiles.isNotEmpty;
 
+  List<List<TileType>> get tileGrid => _tiles;
+
   bool isWalkable(int x, int y) {
     final tile = getTileAt(x, y);
     return tile == TileType.road || tile == TileType.sidewalk ||

@@ -1,7 +1,7 @@
 # 台灣外送哥 - Development Progress
 # Taiwan Delivery Bro - 開發進度追蹤
 
-> Last Updated: 2026-06-18
+> Last Updated: 2026-06-19
 > Current Phase: Phase 1 MVP — Core Complete
 
 ---
@@ -77,8 +77,11 @@
 ### Polish & Monetization (Day 11-13)
 - [ ] AdSense integration (Banner + Interstitial)
 - [ ] Rewarded video ad integration
-- [ ] Sound effects
-- [ ] Background music
+- [x] Sound effects (15 procedural chiptune SFX via Web Audio API) ✅ 2026-06-19
+- [x] Background music (pentatonic melody loop, Taiwan night market vibe) ✅ 2026-06-19
+- [x] Map overhaul: two-lane roads, Taiwan-style buildings, street furniture ✅ 2026-06-19
+- [x] A* pathfinding fix: scooter now prefers roads over sidewalks ✅ 2026-06-19
+- [x] Camera bounds + dark background beyond map edge ✅ 2026-06-19
 - [x] Tutorial / first-time flow ✅ 2026-06-11
 - [x] Responsive design (phone overlay scales) ✅ 2026-06-18
 - [x] Performance optimization (tree-shaking, build web) ✅ 2026-06-18
@@ -104,6 +107,7 @@
 | 2026-06-14 | Session 3 | A* pathfinding, police/parking system, auto-pathfinding, Phone UI (5 tabs: Orders/Equipment/Missions/Achievements/Stats) |
 | 2026-06-18 | Session 4 | Police rebalance (10s/15%), auto-resume path after events, restaurant+landmark labels, responsive phone UI, save/load fix, web build ready |
 | 2026-06-18 | Session 5 | GitHub repo created, GitHub Pages deployment via Actions, README with play link, page title fix |
+| 2026-06-19 | Session 6 | Map overhaul (two-lane roads, Taiwan buildings, street furniture), A* pathfinding road preference fix, procedural chiptune audio system (15 SFX + BGM), camera bounds, full audio integration |
 
 ---
 

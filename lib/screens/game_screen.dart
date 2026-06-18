@@ -15,6 +15,8 @@ import '../widgets/police_stop_overlay.dart';
 import '../widgets/parking_ticket_overlay.dart';
 import '../services/save_service.dart';
 import '../services/audio_service.dart';
+import '../widgets/minimap_widget.dart';
+import '../game/components/map_component.dart';
 
 /// Main game screen with Flame game + Flutter HUD overlay
 class GameScreen extends StatefulWidget {
@@ -54,6 +56,35 @@ class _GameScreenState extends State<GameScreen> {
     AudioService.instance.startMusic();
   }
 
+  Widget _buildMinimap() {
+    final ts = GameConfig.displayTileSize;
+    final pPos = _game.playerComponent.position;
+    final ptx = pPos.x / ts;
+    final pty = pPos.y / ts;
+
+    double? targetX, targetY;
+    var isPickup = true;
+    if (_gameState.activeOrder != null) {
+      if (_gameState.phase == GamePhase.pickingUp) {
+        targetX = _gameState.activeOrder!.pickupX / ts;
+        targetY = _gameState.activeOrder!.pickupY / ts;
+      } else if (_gameState.phase == GamePhase.delivering) {
+        targetX = _gameState.activeOrder!.deliveryX / ts;
+        targetY = _gameState.activeOrder!.deliveryY / ts;
+        isPickup = false;
+      }
+    }
+
+    return MinimapWidget(
+      tiles: _game.mapComponent.tileGrid,
+      playerTileX: ptx,
+      playerTileY: pty,
+      targetTileX: targetX,
+      targetTileY: targetY,
+      isPickup: isPickup,
+    );
+  }
+
   Future<void> _loadSave() async {
     final saved = await SaveService.loadPlayer();
     if (saved != null) {
@@ -86,6 +117,21 @@ class _GameScreenState extends State<GameScreen> {
               onPickUp: () => _game.pickUpOrder(),
               onDeliver: () => _game.deliverOrder(),
             ),
+
+            // Minimap
+            if (!_gameState.isPhoneOpen && !_gameState.showTutorial && !_gameState.isPaused)
+              Positioned(
+                top: 40,
+                right: 8,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.85,
+                    child: _game.mapComponent.isLoaded
+                        ? _buildMinimap()
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+              ),
 
             // Phone UI overlay
             if (_gameState.isPhoneOpen)
