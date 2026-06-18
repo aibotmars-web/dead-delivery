@@ -560,7 +560,7 @@ class DeliveryGame extends FlameGame
   }
 
   void loadPlayer(Player loadedPlayer) {
-    _state = _state.copyWith(player: loadedPlayer);
+    _state = _state.copyWith(player: loadedPlayer, showTutorial: false);
     _notifyState();
   }
 
