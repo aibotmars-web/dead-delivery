@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
+import 'package:flame/experimental.dart';
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
@@ -71,6 +72,15 @@ class DeliveryGame extends FlameGame
     await world.add(_targetMarker);
 
     camera.follow(playerComponent);
+    camera.setBounds(
+      Rectangle.fromLTRB(
+        0,
+        0,
+        GameConfig.mapWidth * GameConfig.displayTileSize,
+        GameConfig.mapHeight * GameConfig.displayTileSize,
+      ),
+      considerViewport: true,
+    );
 
     _notifyState();
   }

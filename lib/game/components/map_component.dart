@@ -246,6 +246,15 @@ class MapComponent extends PositionComponent {
     if (_tiles.isEmpty) return;
     final ts = tileDisplaySize;
 
+    // Fill beyond-map area so camera overshoot shows dark ground, not black
+    final mapW = mapWidth * ts;
+    final mapH = mapHeight * ts;
+    const pad = 800.0;
+    canvas.drawRect(
+      Rect.fromLTWH(-pad, -pad, mapW + pad * 2, mapH + pad * 2),
+      Paint()..color = const Color(0xFF2A2A2A),
+    );
+
     for (int y = 0; y < mapHeight; y++) {
       for (int x = 0; x < mapWidth; x++) {
         final px = x * ts;
