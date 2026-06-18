@@ -86,7 +86,7 @@
 
 ### Launch (Day 13-14)
 - [x] Build web version (44MB, 16s build) ✅ 2026-06-18
-- [ ] Deploy to hosting (GitHub Pages or Cloudflare)
+- [x] Deploy to GitHub Pages (aibotmars-web.github.io/dead-delivery/) ✅ 2026-06-18
 - [ ] Test on multiple devices
 - [ ] Create App Store screenshots
 - [ ] Write game description (ASO)
@@ -103,6 +103,7 @@
 | 2026-06-11 | Session 2 | Full Phase 1 codebase: 6 data models, 4 game systems, 5 UI screens, map with districts, 10 tests passing, web build success |
 | 2026-06-14 | Session 3 | A* pathfinding, police/parking system, auto-pathfinding, Phone UI (5 tabs: Orders/Equipment/Missions/Achievements/Stats) |
 | 2026-06-18 | Session 4 | Police rebalance (10s/15%), auto-resume path after events, restaurant+landmark labels, responsive phone UI, save/load fix, web build ready |
+| 2026-06-18 | Session 5 | GitHub repo created, GitHub Pages deployment via Actions, README with play link, page title fix |
 
 ---
 
