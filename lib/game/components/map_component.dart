@@ -429,6 +429,47 @@ class MapComponent extends PositionComponent {
         canvas.drawRect(Rect.fromLTWH(px + ts - 3 * p, py + sy, 3 * p, 2 * p), cwPaint);
       }
     }
+
+    // Traffic light at major intersections (top-left corner sidewalk)
+    if (_mainRoadsH.contains(y) && _mainRoadsV.contains(x)) {
+      final isCorner = _isSidewalkOrBuilding(x - 1, y - 1);
+      if (isCorner) {
+        _drawTrafficLight(canvas, px, py, p);
+      }
+    }
+  }
+
+  void _drawTrafficLight(Canvas canvas, double px, double py, double p) {
+    // Pole
+    canvas.drawRect(
+      Rect.fromLTWH(px + 1 * p, py + 4 * p, 1.5 * p, 12 * p),
+      Paint()..color = const Color(0xFF4A4A4A),
+    );
+    // Horizontal arm
+    canvas.drawRect(
+      Rect.fromLTWH(px + 1 * p, py + 4 * p, 8 * p, 1 * p),
+      Paint()..color = const Color(0xFF4A4A4A),
+    );
+    // Signal box
+    canvas.drawRect(
+      Rect.fromLTWH(px + 6 * p, py + 1 * p, 4 * p, 7 * p),
+      Paint()..color = const Color(0xFF333333),
+    );
+    // Red light
+    canvas.drawCircle(
+      Offset(px + 8 * p, py + 2.5 * p), 1 * p,
+      Paint()..color = const Color(0xFFFF1744),
+    );
+    // Yellow light
+    canvas.drawCircle(
+      Offset(px + 8 * p, py + 4.5 * p), 1 * p,
+      Paint()..color = const Color(0xFF333333),
+    );
+    // Green light
+    canvas.drawCircle(
+      Offset(px + 8 * p, py + 6.5 * p), 1 * p,
+      Paint()..color = const Color(0xFF333333),
+    );
   }
 
   bool _isSidewalkOrBuilding(int x, int y) {
@@ -486,6 +527,25 @@ class MapComponent extends PositionComponent {
       canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 6 * p, 3 * p, 8 * p), Paint()..color = const Color(0xFF2E7D32));
       canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 6 * p, 3 * p, 8 * p), Paint()..color = const Color(0xFFD32F2F));
       canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 5 * p, 8 * p, 2 * p), Paint()..color = const Color(0xFF424242));
+    } else if (v % 23 == 0) {
+      // Vending machine (自動販賣機)
+      canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 4 * p, 5 * p, 10 * p), Paint()..color = const Color(0xFFD32F2F));
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 5 * p, 3 * p, 4 * p), Paint()..color = const Color(0xCC90CAF9));
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 10 * p, 3 * p, 1 * p), Paint()..color = const Color(0xFF333333));
+      // Light on top
+      canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 3.5 * p, 5 * p, 0.5 * p), Paint()..color = const Color(0xCCFFFFFF));
+    } else if (v % 29 == 0) {
+      // Bus stop shelter (公車站牌)
+      canvas.drawRect(Rect.fromLTWH(px + 7 * p, py + 3 * p, 1.5 * p, 11 * p), Paint()..color = const Color(0xFF616161));
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 3 * p, 8 * p, 1 * p), Paint()..color = const Color(0xFF757575));
+      // Route sign
+      canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 5 * p, 5 * p, 3 * p), Paint()..color = const Color(0xFF1565C0));
+      canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 6 * p, 3 * p, 1 * p), Paint()..color = const Color(0xCCFFFFFF));
+    } else if (v % 31 == 0) {
+      // Fire hydrant (消防栓)
+      canvas.drawRect(Rect.fromLTWH(px + 7 * p, py + 10 * p, 2 * p, 4 * p), Paint()..color = const Color(0xFFD32F2F));
+      canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 9 * p, 4 * p, 2 * p), Paint()..color = const Color(0xFFE53935));
+      canvas.drawCircle(Offset(px + 8 * p, py + 9.5 * p), 1 * p, Paint()..color = const Color(0xFFFFCDD2));
     }
   }
 
@@ -910,17 +970,23 @@ class MapComponent extends PositionComponent {
     final p = ts / 16;
     final v = _tileVariant[y][x];
     canvas.drawRect(Rect.fromLTWH(px, py, ts, ts), Paint()..color = const Color(0xFF4CAF50));
-    if (v % 5 < 2) {
+
+    // Grass texture variation
+    if (v % 3 == 0) {
       canvas.drawRect(
         Rect.fromLTWH(px + (v % 7) * p, py + (v % 5 + 2) * p, 3 * p, 3 * p),
         Paint()..color = const Color(0xFF388E3C),
       );
     }
-    if (v % 4 == 0) {
+
+    if (v % 8 == 0) {
+      // Large tree with shadow
+      canvas.drawCircle(Offset(px + 9 * p, py + 10 * p), 3 * p, Paint()..color = const Color(0x22000000));
       canvas.drawRect(Rect.fromLTWH(px + 7 * p, py + 10 * p, 2 * p, 6 * p), Paint()..color = const Color(0xFF5D4037));
       canvas.drawCircle(Offset(px + 8 * p, py + 8 * p), 4 * p, Paint()..color = const Color(0xFF2E7D32));
-    }
-    if (v % 4 == 1) {
+      canvas.drawCircle(Offset(px + 6 * p, py + 7 * p), 2.5 * p, Paint()..color = const Color(0xFF388E3C));
+    } else if (v % 8 == 1) {
+      // Flower bed
       for (int i = 0; i < 3; i++) {
         final fx = px + (3 + i * 4) * p;
         final fy = py + (8 + (v * i) % 5) * p;
@@ -929,6 +995,26 @@ class MapComponent extends PositionComponent {
           Paint()..color = Color.lerp(const Color(0xFFFF6B6B), const Color(0xFFFFD700), (v * i % 10) / 10.0)!,
         );
       }
+    } else if (v % 8 == 2) {
+      // Park bench
+      canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 9 * p, 10 * p, 1 * p), Paint()..color = const Color(0xFF795548));
+      canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 10 * p, 1 * p, 2 * p), Paint()..color = const Color(0xFF5D4037));
+      canvas.drawRect(Rect.fromLTWH(px + 12 * p, py + 10 * p, 1 * p, 2 * p), Paint()..color = const Color(0xFF5D4037));
+      canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 7 * p, 10 * p, 1 * p), Paint()..color = const Color(0xFF795548));
+    } else if (v % 8 == 3) {
+      // Walking path (gravel)
+      canvas.drawRect(Rect.fromLTWH(px, py + 7 * p, ts, 2 * p), Paint()..color = const Color(0xFFBCAAA4));
+      canvas.drawRect(Rect.fromLTWH(px, py + 7.5 * p, ts, 0.3 * p), Paint()..color = const Color(0xFFA1887F));
+    } else if (v % 8 == 4) {
+      // Small bush cluster
+      canvas.drawCircle(Offset(px + 5 * p, py + 8 * p), 2.5 * p, Paint()..color = const Color(0xFF388E3C));
+      canvas.drawCircle(Offset(px + 10 * p, py + 10 * p), 2 * p, Paint()..color = const Color(0xFF2E7D32));
+      canvas.drawCircle(Offset(px + 8 * p, py + 6 * p), 1.5 * p, Paint()..color = const Color(0xFF43A047));
+    } else if (v % 8 == 5) {
+      // Streetlamp in park
+      canvas.drawRect(Rect.fromLTWH(px + 7 * p, py + 4 * p, 1.5 * p, 10 * p), Paint()..color = const Color(0xFF616161));
+      canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 3 * p, 5 * p, 1.5 * p), Paint()..color = const Color(0xFF757575));
+      canvas.drawCircle(Offset(px + 7.5 * p, py + 3 * p), 1.5 * p, Paint()..color = const Color(0x44FFFF00));
     }
   }
 
@@ -990,6 +1076,13 @@ class MapComponent extends PositionComponent {
       (8, 42, '🛕 土地公', const Color(0xAAC62828)),
       (38, 38, '🏫 補習班', const Color(0xAA6A1B9A)),
       (44, 38, '🧺 自助洗', const Color(0xAA0277BD)),
+      (13, 3, '💇 美髮店', const Color(0xAA8E24AA)),
+      (33, 10, '🏧 ATM', const Color(0xAA1565C0)),
+      (3, 10, '🏪 萊爾富', const Color(0xAA00897B)),
+      (44, 10, '🧋 清心', const Color(0xAA00897B)),
+      (7, 38, '🍜 牛肉麵', const Color(0xAAE65100)),
+      (38, 44, '🎮 網咖', const Color(0xAA6A1B9A)),
+      (44, 44, '🧹 洗衣店', const Color(0xAA0277BD)),
     ];
     for (final (lx, ly, name, color) in landmarks) {
       final cx = (lx + 0.5) * tileDisplaySize;
