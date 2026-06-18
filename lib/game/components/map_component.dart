@@ -276,57 +276,87 @@ class MapComponent extends PositionComponent {
     _drawZoneLabels(canvas);
   }
 
-  // ── Road with parking lines ──
+  // ── Road with lane markings & parking lines ──
   void _drawRoad(Canvas canvas, int x, int y, double px, double py, double ts) {
     final rect = Rect.fromLTWH(px, py, ts, ts);
-    canvas.drawRect(rect, Paint()..color = const Color(0xFF3A3A3A));
+    canvas.drawRect(rect, Paint()..color = const Color(0xFF404040));
 
+    final p = ts / 16;
+    final isMainH = _mainRoadsH.contains(y);
+    final isMainV = _mainRoadsV.contains(x);
     final hasH = _roadAt(x - 1, y) || _roadAt(x + 1, y);
     final hasV = _roadAt(x, y - 1) || _roadAt(x, y + 1);
-    final p = ts / 16;
+    final isIntersection = hasH && hasV;
 
-    if (hasH && !hasV) {
-      if (x % 4 < 2) {
+    // Asphalt texture variation
+    final v = _tileVariant[y][x];
+    if (v % 7 == 0) {
+      canvas.drawRect(
+        Rect.fromLTWH(px + (v % 12) * p, py + (v % 10) * p, 3 * p, 2 * p),
+        Paint()..color = const Color(0xFF383838),
+      );
+    }
+
+    if (isIntersection) {
+      // Intersection: crosswalk stripes at edges adjacent to sidewalk
+      _drawCrosswalkIfNeeded(canvas, x, y, px, py, ts, p);
+    } else if (hasH && !hasV) {
+      // Horizontal road
+      final isTopLane = isMainH && _mainRoadsH.contains(y + 1);
+      final isBottomLane = isMainH && _mainRoadsH.contains(y - 1);
+
+      if (isTopLane) {
+        // Top lane of 2-lane road: draw dashed yellow center line at bottom edge
+        _drawDashedLine(canvas, px, py + 15 * p, ts, 1.5 * p,
+            isHorizontal: true, color: const Color(0xDDFFD600), dashLen: 4 * p);
+        // White edge line at top
         canvas.drawRect(
-          Rect.fromLTWH(px, py + 7 * p, ts, 2 * p),
-          Paint()..color = const Color(0xCCE8B828),
+          Rect.fromLTWH(px, py, ts, p),
+          Paint()..color = const Color(0x88FFFFFF),
         );
+      } else if (isBottomLane) {
+        // Bottom lane: dashed yellow center at top edge
+        _drawDashedLine(canvas, px, py, ts, 1.5 * p,
+            isHorizontal: true, color: const Color(0xDDFFD600), dashLen: 4 * p);
+        canvas.drawRect(
+          Rect.fromLTWH(px, py + 15 * p, ts, p),
+          Paint()..color = const Color(0x88FFFFFF),
+        );
+      } else {
+        // Single-lane secondary road: dashed white center
+        _drawDashedLine(canvas, px, py + 7 * p, ts, 1.5 * p,
+            isHorizontal: true, color: const Color(0x99FFFFFF), dashLen: 3 * p);
+        canvas.drawRect(Rect.fromLTWH(px, py, ts, p), Paint()..color = const Color(0x55FFFFFF));
+        canvas.drawRect(Rect.fromLTWH(px, py + 15 * p, ts, p), Paint()..color = const Color(0x55FFFFFF));
       }
-      canvas.drawRect(
-        Rect.fromLTWH(px, py, ts, p),
-        Paint()..color = const Color(0x55FFFFFF),
-      );
-      canvas.drawRect(
-        Rect.fromLTWH(px, py + 15 * p, ts, p),
-        Paint()..color = const Color(0x55FFFFFF),
-      );
     } else if (hasV && !hasH) {
-      if (y % 4 < 2) {
+      // Vertical road
+      final isLeftLane = isMainV && _mainRoadsV.contains(x + 1);
+      final isRightLane = isMainV && _mainRoadsV.contains(x - 1);
+
+      if (isLeftLane) {
+        _drawDashedLine(canvas, px + 15 * p, py, 1.5 * p, ts,
+            isHorizontal: false, color: const Color(0xDDFFD600), dashLen: 4 * p);
         canvas.drawRect(
-          Rect.fromLTWH(px + 7 * p, py, 2 * p, ts),
-          Paint()..color = const Color(0xCCE8B828),
+          Rect.fromLTWH(px, py, p, ts),
+          Paint()..color = const Color(0x88FFFFFF),
         );
-      }
-      canvas.drawRect(
-        Rect.fromLTWH(px, py, p, ts),
-        Paint()..color = const Color(0x55FFFFFF),
-      );
-      canvas.drawRect(
-        Rect.fromLTWH(px + 15 * p, py, p, ts),
-        Paint()..color = const Color(0x55FFFFFF),
-      );
-    } else {
-      if (x % 2 == 0) {
-        for (double sy = 2 * p; sy < ts - 2 * p; sy += 4 * p) {
-          canvas.drawRect(
-            Rect.fromLTWH(px + 2 * p, py + sy, ts - 4 * p, 2 * p),
-            Paint()..color = const Color(0x33FFFFFF),
-          );
-        }
+      } else if (isRightLane) {
+        _drawDashedLine(canvas, px, py, 1.5 * p, ts,
+            isHorizontal: false, color: const Color(0xDDFFD600), dashLen: 4 * p);
+        canvas.drawRect(
+          Rect.fromLTWH(px + 15 * p, py, p, ts),
+          Paint()..color = const Color(0x88FFFFFF),
+        );
+      } else {
+        _drawDashedLine(canvas, px + 7 * p, py, 1.5 * p, ts,
+            isHorizontal: false, color: const Color(0x99FFFFFF), dashLen: 3 * p);
+        canvas.drawRect(Rect.fromLTWH(px, py, p, ts), Paint()..color = const Color(0x55FFFFFF));
+        canvas.drawRect(Rect.fromLTWH(px + 15 * p, py, p, ts), Paint()..color = const Color(0x55FFFFFF));
       }
     }
 
-    // Draw parking line stripe on road edge near sidewalk
+    // Parking line stripe on road edge near sidewalk
     final pl = _parkingLines[y * mapWidth + x];
     if (pl != null) {
       final lineColor = switch (pl) {
@@ -335,7 +365,6 @@ class MapComponent extends PositionComponent {
         ParkingLine.white => const Color(0xDDFFFFFF),
       };
       final linePaint = Paint()..color = lineColor;
-      // Draw on the side closest to sidewalk/building
       if (_isSidewalkOrBuilding(x, y - 1)) {
         canvas.drawRect(Rect.fromLTWH(px, py, ts, 1.5 * p), linePaint);
       }
@@ -351,6 +380,48 @@ class MapComponent extends PositionComponent {
     }
   }
 
+  static const _mainRoadsH = {12, 13, 25, 26, 38, 39};
+  static const _mainRoadsV = {10, 11, 24, 25, 40, 41};
+
+  void _drawDashedLine(Canvas canvas, double x, double y, double w, double h,
+      {required bool isHorizontal, required Color color, required double dashLen}) {
+    final paint = Paint()..color = color;
+    if (isHorizontal) {
+      for (double dx = 0; dx < w; dx += dashLen * 2) {
+        canvas.drawRect(Rect.fromLTWH(x + dx, y, dashLen.clamp(0, w - dx), h), paint);
+      }
+    } else {
+      for (double dy = 0; dy < h; dy += dashLen * 2) {
+        canvas.drawRect(Rect.fromLTWH(x, y + dy, w, dashLen.clamp(0, h - dy)), paint);
+      }
+    }
+  }
+
+  void _drawCrosswalkIfNeeded(Canvas canvas, int x, int y, double px, double py, double ts, double p) {
+    final cwPaint = Paint()..color = const Color(0xAAFFFFFF);
+    // Draw crosswalk stripes where road meets sidewalk
+    if (_isSidewalkOrBuilding(x, y - 1)) {
+      for (double sx = 2 * p; sx < ts - 2 * p; sx += 4 * p) {
+        canvas.drawRect(Rect.fromLTWH(px + sx, py, 2 * p, 3 * p), cwPaint);
+      }
+    }
+    if (_isSidewalkOrBuilding(x, y + 1)) {
+      for (double sx = 2 * p; sx < ts - 2 * p; sx += 4 * p) {
+        canvas.drawRect(Rect.fromLTWH(px + sx, py + ts - 3 * p, 2 * p, 3 * p), cwPaint);
+      }
+    }
+    if (_isSidewalkOrBuilding(x - 1, y)) {
+      for (double sy = 2 * p; sy < ts - 2 * p; sy += 4 * p) {
+        canvas.drawRect(Rect.fromLTWH(px, py + sy, 3 * p, 2 * p), cwPaint);
+      }
+    }
+    if (_isSidewalkOrBuilding(x + 1, y)) {
+      for (double sy = 2 * p; sy < ts - 2 * p; sy += 4 * p) {
+        canvas.drawRect(Rect.fromLTWH(px + ts - 3 * p, py + sy, 3 * p, 2 * p), cwPaint);
+      }
+    }
+  }
+
   bool _isSidewalkOrBuilding(int x, int y) {
     if (x < 0 || x >= mapWidth || y < 0 || y >= mapHeight) return false;
     final t = _tiles[y][x];
@@ -358,30 +429,54 @@ class MapComponent extends PositionComponent {
         t == TileType.restaurant || t == TileType.customer;
   }
 
-  // ── Sidewalk ──
+  // ── Sidewalk with street furniture ──
   void _drawSidewalk(Canvas canvas, int x, int y, double px, double py, double ts) {
     canvas.drawRect(
       Rect.fromLTWH(px, py, ts, ts),
-      Paint()..color = const Color(0xFF9E9E9E),
+      Paint()..color = const Color(0xFFB0A898),
     );
     final p = ts / 16;
-    final linePaint = Paint()
-      ..color = const Color(0x22000000)
-      ..strokeWidth = 0.5;
-    canvas.drawLine(Offset(px + 8 * p, py), Offset(px + 8 * p, py + ts), linePaint);
-    canvas.drawLine(Offset(px, py + 8 * p), Offset(px + ts, py + 8 * p), linePaint);
+    final v = _tileVariant[y][x];
 
-    if (_roadAt(x, y + 1)) {
-      canvas.drawRect(Rect.fromLTWH(px, py + 14 * p, ts, 2 * p), Paint()..color = const Color(0xFF787878));
+    // Paving pattern (brick-like)
+    final tileLine = Paint()..color = const Color(0x18000000);
+    for (int row = 0; row < 4; row++) {
+      final off = row.isOdd ? 4.0 : 0.0;
+      for (double bx = off; bx < 16; bx += 8) {
+        canvas.drawRect(
+          Rect.fromLTWH(px + bx * p, py + row * 4 * p, 8 * p, 0.5 * p), tileLine);
+        canvas.drawRect(
+          Rect.fromLTWH(px + bx * p, py + row * 4 * p, 0.5 * p, 4 * p), tileLine);
+      }
     }
-    if (_roadAt(x, y - 1)) {
-      canvas.drawRect(Rect.fromLTWH(px, py, ts, 2 * p), Paint()..color = const Color(0xFF787878));
-    }
-    if (_roadAt(x + 1, y)) {
-      canvas.drawRect(Rect.fromLTWH(px + 14 * p, py, 2 * p, ts), Paint()..color = const Color(0xFF787878));
-    }
-    if (_roadAt(x - 1, y)) {
-      canvas.drawRect(Rect.fromLTWH(px, py, 2 * p, ts), Paint()..color = const Color(0xFF787878));
+
+    // Curb edge (darker strip near road)
+    final curb = Paint()..color = const Color(0xFF787878);
+    if (_roadAt(x, y + 1)) canvas.drawRect(Rect.fromLTWH(px, py + 14 * p, ts, 2 * p), curb);
+    if (_roadAt(x, y - 1)) canvas.drawRect(Rect.fromLTWH(px, py, ts, 2 * p), curb);
+    if (_roadAt(x + 1, y)) canvas.drawRect(Rect.fromLTWH(px + 14 * p, py, 2 * p, ts), curb);
+    if (_roadAt(x - 1, y)) canvas.drawRect(Rect.fromLTWH(px, py, 2 * p, ts), curb);
+
+    // Street furniture (scattered props on some sidewalk tiles)
+    if (v % 11 == 0) {
+      // Utility pole
+      canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 2 * p, 1.5 * p, 14 * p), Paint()..color = const Color(0xFF5D5D5D));
+      canvas.drawRect(Rect.fromLTWH(px, py + 2 * p, 5 * p, 1 * p), Paint()..color = const Color(0xFF4A4A4A));
+    } else if (v % 13 == 0) {
+      // Parked scooter (side view)
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 10 * p, 8 * p, 4 * p), Paint()..color = const Color(0xFF424242));
+      canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 8 * p, 4 * p, 3 * p), Paint()..color = const Color(0xFF616161));
+      canvas.drawCircle(Offset(px + 5 * p, py + 14 * p), 1.5 * p, Paint()..color = const Color(0xFF333333));
+      canvas.drawCircle(Offset(px + 11 * p, py + 14 * p), 1.5 * p, Paint()..color = const Color(0xFF333333));
+    } else if (v % 17 == 0) {
+      // Trash can
+      canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 8 * p, 4 * p, 6 * p), Paint()..color = const Color(0xFF2E7D32));
+      canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 7 * p, 6 * p, 2 * p), Paint()..color = const Color(0xFF388E3C));
+    } else if (v % 19 == 0) {
+      // Mailbox (台灣郵筒 green+red)
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 6 * p, 3 * p, 8 * p), Paint()..color = const Color(0xFF2E7D32));
+      canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 6 * p, 3 * p, 8 * p), Paint()..color = const Color(0xFFD32F2F));
+      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 5 * p, 8 * p, 2 * p), Paint()..color = const Color(0xFF424242));
     }
   }
 
@@ -457,87 +552,131 @@ class MapComponent extends PositionComponent {
       canvas.drawRect(Rect.fromLTWH(px + 8 * p, py + 5 * p, 1 * p, 2 * p), winFrame);
     }
 
-    // Balcony railing (iron)
-    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 9 * p, 14 * p, 1 * p), Paint()..color = const Color(0xFF4A4A4A));
-    for (double rx = 2; rx < 15; rx += 3) {
-      canvas.drawRect(Rect.fromLTWH(px + rx * p, py + 9 * p, 1 * p, 3 * p), Paint()..color = const Color(0xFF555555));
+    // 鐵窗 Iron window grilles (iconic Taiwan element)
+    final grillePaint = Paint()..color = const Color(0xFF4A4A4A);
+    if (v % 3 == 0) {
+      // Grille on windows
+      canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 4 * p, 5 * p, 0.5 * p), grillePaint);
+      canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 7 * p, 5 * p, 0.5 * p), grillePaint);
+      for (double gx = 2; gx < 7; gx += 1.5) {
+        canvas.drawRect(Rect.fromLTWH(px + gx * p, py + 4 * p, 0.5 * p, 4 * p), grillePaint);
+      }
     }
 
-    // AC unit (some houses)
+    // Balcony railing (iron) with laundry poles
+    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 9 * p, 14 * p, 0.5 * p), grillePaint);
+    for (double rx = 2; rx < 15; rx += 2) {
+      canvas.drawRect(Rect.fromLTWH(px + rx * p, py + 9 * p, 0.5 * p, 2 * p), grillePaint);
+    }
+
+    // AC unit (some houses) — with drip pipe
     if (v % 4 == 0) {
       canvas.drawRect(Rect.fromLTWH(px + 12 * p, py + 5 * p, 3 * p, 2 * p), Paint()..color = const Color(0xFF888888));
-      canvas.drawRect(Rect.fromLTWH(px + 12 * p, py + 5 * p, 3 * p, 1 * p), Paint()..color = const Color(0xFF999999));
+      canvas.drawRect(Rect.fromLTWH(px + 12 * p, py + 5 * p, 3 * p, 0.5 * p), Paint()..color = const Color(0xFFAAAAAA));
+      // Drip pipe
+      canvas.drawRect(Rect.fromLTWH(px + 15 * p, py + 7 * p, 0.5 * p, 9 * p), Paint()..color = const Color(0xFF666666));
     }
 
-    // Door
-    canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 10 * p, 4 * p, 6 * p), Paint()..color = const Color(0xFF5D3A1A));
+    // Door with awning
+    canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 10 * p, 6 * p, 6 * p), Paint()..color = const Color(0xFF5D3A1A));
+    canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 11 * p, 4 * p, 4 * p), Paint()..color = const Color(0xFF7A4E2A));
     canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 13 * p, 1 * p, 1 * p), Paint()..color = const Color(0xFFDAA520));
+    // Metal roller shutter above door (鐵捲門)
+    canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 10 * p, 6 * p, 1 * p), Paint()..color = const Color(0xFF666666));
 
-    // Potted plant (some houses)
+    // Street-level number plate
+    if (v % 5 == 0) {
+      canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 11 * p, 3 * p, 2 * p), Paint()..color = const Color(0xFF1565C0));
+      canvas.drawRect(Rect.fromLTWH(px + 1.5 * p, py + 11.5 * p, 2 * p, 1 * p), Paint()..color = const Color(0xCCFFFFFF));
+    }
+
+    // Potted plants (very common in Taiwan streets)
     if (v % 3 == 1) {
       canvas.drawRect(Rect.fromLTWH(px + 13 * p, py + 14 * p, 2 * p, 2 * p), Paint()..color = const Color(0xFF8B4513));
       canvas.drawCircle(Offset(px + 14 * p, py + 13 * p), 1.5 * p, Paint()..color = const Color(0xFF4CAF50));
     }
+    if (v % 7 == 0) {
+      canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 14 * p, 2 * p, 2 * p), Paint()..color = const Color(0xFF6D4C41));
+      canvas.drawCircle(Offset(px + 2 * p, py + 13.5 * p), 1.2 * p, Paint()..color = const Color(0xFF66BB6A));
+    }
   }
 
-  // ── Commercial: modern glass+steel offices ──
+  // ── Commercial: Taiwan street shops with awnings & LED signs ──
   void _drawCommercial(Canvas canvas, int x, int y, double px, double py, double ts) {
     final p = ts / 16;
     final v = _tileVariant[y][x];
     final dst = Rect.fromLTWH(px, py, ts, ts);
 
-    // Steel/glass base
-    canvas.drawRect(dst, Paint()..color = const Color(0xFF546E7A));
+    // Concrete facade
+    final facadeColors = [
+      const Color(0xFFD7CCC8), const Color(0xFFCFD8DC),
+      const Color(0xFFE8E0D8), const Color(0xFFBCAAA4),
+    ];
+    canvas.drawRect(dst, Paint()..color = facadeColors[v % facadeColors.length]);
 
-    // Floor dividers
-    for (double fy = 4; fy < 16; fy += 4) {
-      canvas.drawRect(
-        Rect.fromLTWH(px, py + fy * p, ts, 1 * p),
-        Paint()..color = const Color(0xFF455A64),
-      );
-    }
+    // Floor divider (horizontal line)
+    canvas.drawRect(
+      Rect.fromLTWH(px, py + 7 * p, ts, 0.5 * p),
+      Paint()..color = const Color(0xFF9E9E9E),
+    );
 
-    // Sign/banner at top
+    // Big colorful shop sign (招牌) — THE most Taiwan commercial feature
     final signColors = [
-      const Color(0xFF1565C0), const Color(0xFFC62828),
-      const Color(0xFF2E7D32), const Color(0xFF6A1B9A),
+      const Color(0xFFD32F2F), const Color(0xFF1565C0),
+      const Color(0xFF2E7D32), const Color(0xFFF57F17),
+      const Color(0xFF6A1B9A), const Color(0xFFE65100),
     ];
     final signColor = signColors[v % signColors.length];
-    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py, 14 * p, 3 * p), Paint()..color = signColor);
-    // Sign text lines
-    canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 1 * p, 10 * p, 1 * p), Paint()..color = Colors.white.withAlpha(200));
+    canvas.drawRect(Rect.fromLTWH(px, py, ts, 4 * p), Paint()..color = signColor);
+    // Sign border
+    canvas.drawRect(Rect.fromLTWH(px, py + 3.5 * p, ts, 0.5 * p), Paint()..color = signColor.withAlpha(180));
+    // White text area on sign
+    canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 0.5 * p, 12 * p, 2.5 * p), Paint()..color = const Color(0xDDFFFFFF));
+    // Faux text lines
+    canvas.drawRect(Rect.fromLTWH(px + 3 * p, py + 1 * p, 4 * p, 1 * p), Paint()..color = signColor.withAlpha(200));
+    canvas.drawRect(Rect.fromLTWH(px + 8 * p, py + 1 * p, 5 * p, 1 * p), Paint()..color = signColor.withAlpha(150));
 
-    // Large glass windows (reflective blue)
-    final glassPaint = Paint()..color = const Color(0xAA80DEEA);
-    final glassFrame = Paint()..color = const Color(0xFF37474F);
-    // Row 1
-    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 4 * p, 6 * p, 3 * p), glassFrame);
-    canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 5 * p, 4 * p, 1.5 * p), glassPaint);
-    canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 4 * p, 6 * p, 3 * p), glassFrame);
-    canvas.drawRect(Rect.fromLTWH(px + 10 * p, py + 5 * p, 4 * p, 1.5 * p), glassPaint);
-    // Row 2
-    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 8 * p, 6 * p, 3 * p), glassFrame);
-    canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 9 * p, 4 * p, 1.5 * p), glassPaint);
-    canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 8 * p, 6 * p, 3 * p), glassFrame);
-    canvas.drawRect(Rect.fromLTWH(px + 10 * p, py + 9 * p, 4 * p, 1.5 * p), glassPaint);
-
-    // Glass door entrance
-    canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 12 * p, 6 * p, 4 * p), Paint()..color = const Color(0xFF263238));
-    canvas.drawRect(Rect.fromLTWH(px + 6 * p, py + 12 * p, 4 * p, 3 * p), Paint()..color = const Color(0x8880DEEA));
-    canvas.drawRect(Rect.fromLTWH(px + 8 * p, py + 12 * p, 1 * p, 3 * p), Paint()..color = const Color(0xFF37474F));
-
-    // Neon accent stripe
-    if (v % 3 == 0) {
+    // Awning (遮雨棚) over ground floor — striped fabric
+    final awningColor = v % 2 == 0 ? const Color(0xFF1B5E20) : const Color(0xFF880E4F);
+    canvas.drawRect(Rect.fromLTWH(px, py + 8 * p, ts, 2 * p), Paint()..color = awningColor);
+    // Stripe pattern on awning
+    for (double sx = 0; sx < 16; sx += 4) {
       canvas.drawRect(
-        Rect.fromLTWH(px, py + 3 * p, ts, 1 * p),
-        Paint()..color = const Color(0x6600E5FF),
+        Rect.fromLTWH(px + sx * p, py + 8 * p, 2 * p, 2 * p),
+        Paint()..color = awningColor.withAlpha(150),
       );
     }
+    // Awning drip edge
+    canvas.drawRect(Rect.fromLTWH(px, py + 10 * p, ts, 0.5 * p), Paint()..color = const Color(0xFF424242));
 
-    // Antenna/structure on roof (some buildings)
+    // Second floor windows with iron grilles
+    final glassPaint = Paint()..color = const Color(0xAA90CAF9);
+    canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 4.5 * p, 5 * p, 2.5 * p), glassPaint);
+    canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 4.5 * p, 5 * p, 2.5 * p), glassPaint);
+    // Iron grilles
+    final grille = Paint()..color = const Color(0xFF555555);
+    for (double gx = 2; gx < 7; gx += 1.5) {
+      canvas.drawRect(Rect.fromLTWH(px + gx * p, py + 4.5 * p, 0.4 * p, 2.5 * p), grille);
+    }
+    for (double gx = 9; gx < 14; gx += 1.5) {
+      canvas.drawRect(Rect.fromLTWH(px + gx * p, py + 4.5 * p, 0.4 * p, 2.5 * p), grille);
+    }
+
+    // Ground floor: glass door + display window
+    canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 10.5 * p, 6 * p, 5.5 * p), Paint()..color = const Color(0xAA80DEEA));
+    canvas.drawRect(Rect.fromLTWH(px + 8 * p, py + 10.5 * p, 4 * p, 5.5 * p), Paint()..color = const Color(0xFF37474F));
+    canvas.drawRect(Rect.fromLTWH(px + 9 * p, py + 11 * p, 2 * p, 4 * p), Paint()..color = const Color(0x8880DEEA));
+    // Door handle
+    canvas.drawRect(Rect.fromLTWH(px + 11 * p, py + 13 * p, 0.5 * p, 1.5 * p), Paint()..color = const Color(0xFFBDBDBD));
+
+    // LED open sign (some shops)
+    if (v % 3 == 0) {
+      canvas.drawRect(Rect.fromLTWH(px + 13 * p, py + 11 * p, 2 * p, 1.5 * p), Paint()..color = const Color(0xCCFF1744));
+    }
+
+    // Rooftop AC / water tank
     if (v % 5 == 0) {
-      canvas.drawRect(Rect.fromLTWH(px + 13 * p, py - 2 * p, 1 * p, 2 * p), Paint()..color = const Color(0xFF455A64));
-      canvas.drawRect(Rect.fromLTWH(px + 12 * p, py - 2 * p, 3 * p, 1 * p), Paint()..color = const Color(0xFF546E7A));
+      canvas.drawRect(Rect.fromLTWH(px + 12 * p, py - 1.5 * p, 3 * p, 1.5 * p), Paint()..color = const Color(0xFF757575));
     }
   }
 
@@ -644,16 +783,46 @@ class MapComponent extends PositionComponent {
       canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + ry * p, 14 * p, 0.5 * p), railPaint);
     }
 
-    // Rooftop water tank (some buildings)
+    // Rooftop water tank (very Taiwan)
     if (v % 5 == 0) {
       canvas.drawRect(Rect.fromLTWH(px + 11 * p, py - 2 * p, 4 * p, 2 * p), Paint()..color = const Color(0xFF6D6D6D));
-      canvas.drawRect(Rect.fromLTWH(px + 11 * p, py - 2 * p, 4 * p, 1 * p), Paint()..color = const Color(0xFF7A7A7A));
+      canvas.drawRect(Rect.fromLTWH(px + 11 * p, py - 2 * p, 4 * p, 0.5 * p), Paint()..color = const Color(0xFF8A8A8A));
     }
 
-    // Laundry on balcony (some apartments)
+    // Rooftop illegal addition (鐵皮加蓋 — corrugated metal)
+    if (v % 7 == 0) {
+      canvas.drawRect(Rect.fromLTWH(px + 1 * p, py - 1.5 * p, 10 * p, 1.5 * p), Paint()..color = const Color(0xFF7E7E7E));
+      // Corrugation lines
+      for (double cx = 1; cx < 11; cx += 2) {
+        canvas.drawRect(
+          Rect.fromLTWH(px + cx * p, py - 1.5 * p, 1 * p, 1.5 * p),
+          Paint()..color = const Color(0xFF8A8A8A),
+        );
+      }
+    }
+
+    // Laundry on balcony (clothes hanging — very common)
     if (v % 3 == 1) {
-      canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 7 * p, 1 * p, 2 * p), Paint()..color = const Color(0xFFE0E0E0));
-      canvas.drawRect(Rect.fromLTWH(px + 4 * p, py + 7 * p, 1 * p, 2 * p), Paint()..color = const Color(0xFF90CAF9));
+      // Laundry pole line
+      canvas.drawRect(Rect.fromLTWH(px + 1 * p, py + 7 * p, 14 * p, 0.3 * p), Paint()..color = const Color(0xFF616161));
+      // Hanging clothes
+      canvas.drawRect(Rect.fromLTWH(px + 2 * p, py + 7 * p, 1.5 * p, 2.5 * p), Paint()..color = const Color(0xFFE0E0E0));
+      canvas.drawRect(Rect.fromLTWH(px + 5 * p, py + 7 * p, 1.5 * p, 2 * p), Paint()..color = const Color(0xFF90CAF9));
+      canvas.drawRect(Rect.fromLTWH(px + 8 * p, py + 7 * p, 1.5 * p, 2.5 * p), Paint()..color = const Color(0xFFFFCDD2));
+      canvas.drawRect(Rect.fromLTWH(px + 11 * p, py + 7 * p, 1.5 * p, 2 * p), Paint()..color = const Color(0xFFC8E6C9));
+    }
+
+    // Water stain streaks (aging concrete — very Taiwan)
+    if (v % 4 == 2) {
+      canvas.drawRect(
+        Rect.fromLTWH(px + (v % 10) * p, py + 4 * p, 1 * p, 8 * p),
+        Paint()..color = const Color(0x15000000),
+      );
+    }
+
+    // Cable bundle on facade
+    if (v % 6 == 0) {
+      canvas.drawRect(Rect.fromLTWH(px, py + 3 * p, ts, 0.5 * p), Paint()..color = const Color(0xFF333333));
     }
   }
 
@@ -879,9 +1048,21 @@ class MapComponent extends PositionComponent {
         final nk = ny * w + nx;
         if (closed[nk] || !isWalkable(nx, ny)) continue;
 
-        // Sidewalk tiles cost less when riding = faster travel (1.3x boost)
-        final tileCost = (preferSidewalks && _tiles[ny][nx] == TileType.sidewalk)
-            ? 0.75 : 1.0;
+        // Riding scooter: roads are natural (cheap), sidewalks penalized
+        // Walking: sidewalks are natural (cheap), roads penalized
+        final tile = _tiles[ny][nx];
+        double tileCost;
+        if (preferSidewalks) {
+          // Riding: prefer roads, avoid sidewalks
+          tileCost = tile == TileType.road ? 0.7
+                   : tile == TileType.sidewalk ? 1.5
+                   : 1.0;
+        } else {
+          // Walking: prefer sidewalks, roads are ok
+          tileCost = tile == TileType.sidewalk ? 0.8
+                   : tile == TileType.road ? 1.1
+                   : 1.0;
+        }
         final tg = (g[cur] ?? 1e9) + tileCost;
         if (tg < (g[nk] ?? 1e9)) {
           parent[nk] = cur;

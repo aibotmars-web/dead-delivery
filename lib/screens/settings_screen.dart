@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../config/constants.dart';
+import '../services/audio_service.dart';
 import '../services/save_service.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,8 +48,11 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.volume_up,
                     label: '音效',
                     trailing: Switch(
-                      value: true,
-                      onChanged: (_) {},
+                      value: AudioService.instance.sfxEnabled,
+                      onChanged: (v) {
+                        setState(() => AudioService.instance.setSfxEnabled(v));
+                        if (v) AudioService.instance.playSfx(SfxType.buttonTap);
+                      },
                       activeColor: Color(AppColors.orangeMain),
                     ),
                   ),
@@ -51,8 +60,10 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.music_note,
                     label: '背景音樂',
                     trailing: Switch(
-                      value: true,
-                      onChanged: (_) {},
+                      value: AudioService.instance.musicEnabled,
+                      onChanged: (v) {
+                        setState(() => AudioService.instance.setMusicEnabled(v));
+                      },
                       activeColor: Color(AppColors.orangeMain),
                     ),
                   ),

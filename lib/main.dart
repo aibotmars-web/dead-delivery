@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'screens/title_screen.dart';
+import 'services/audio_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  AudioService.instance.init();
 
   // Lock to portrait mode
   SystemChrome.setPreferredOrientations([

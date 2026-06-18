@@ -14,6 +14,7 @@ import '../widgets/tutorial_overlay.dart';
 import '../widgets/police_stop_overlay.dart';
 import '../widgets/parking_ticket_overlay.dart';
 import '../services/save_service.dart';
+import '../services/audio_service.dart';
 
 /// Main game screen with Flame game + Flutter HUD overlay
 class GameScreen extends StatefulWidget {
@@ -50,6 +51,7 @@ class _GameScreenState extends State<GameScreen> {
       },
     );
     _loadSave();
+    AudioService.instance.startMusic();
   }
 
   Future<void> _loadSave() async {
@@ -57,6 +59,12 @@ class _GameScreenState extends State<GameScreen> {
     if (saved != null) {
       _game.loadPlayer(saved);
     }
+  }
+
+  @override
+  void dispose() {
+    AudioService.instance.stopMusic();
+    super.dispose();
   }
 
   @override

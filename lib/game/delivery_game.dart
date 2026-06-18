@@ -10,6 +10,7 @@ import '../models/order.dart' as models;
 import '../models/player.dart';
 import '../models/city_event.dart';
 import '../models/event_card.dart';
+import '../services/audio_service.dart';
 import 'components/player_component.dart';
 import 'components/map_component.dart';
 import 'systems/order_spawner.dart';
@@ -220,6 +221,7 @@ class DeliveryGame extends FlameGame
       if (event != null) {
         currentCityEvent = event;
         _state = _state.copyWith(phase: GamePhase.eventPopup);
+        AudioService.instance.playSfx(SfxType.eventPopup);
         _notifyState();
         return;
       }
@@ -234,6 +236,7 @@ class DeliveryGame extends FlameGame
         _phaseBeforePolice = _state.phase;
         playerComponent.stop();
         _state = _state.copyWith(phase: GamePhase.policeStop);
+        AudioService.instance.playSfx(SfxType.policeSiren);
         _notifyState();
       }
     }
@@ -279,6 +282,7 @@ class DeliveryGame extends FlameGame
       availableOrders: remaining,
       phase: GamePhase.pickingUp,
     );
+    AudioService.instance.playSfx(SfxType.orderAccept);
     _notifyState();
     _resumePathToTarget(GamePhase.pickingUp);
   }
@@ -289,6 +293,7 @@ class DeliveryGame extends FlameGame
       activeOrder: _state.activeOrder!.pickUp(),
       phase: GamePhase.delivering,
     );
+    AudioService.instance.playSfx(SfxType.pickup);
     _notifyState();
     _resumePathToTarget(GamePhase.delivering);
   }
@@ -359,9 +364,16 @@ class DeliveryGame extends FlameGame
     final result = _achievementChecker.check(_state);
     if (result.newlyEarned.isNotEmpty) {
       _state = _state.copyWith(player: result.player);
+      AudioService.instance.playSfx(SfxType.achievement);
     }
 
+    AudioService.instance.playSfx(SfxType.deliver);
     currentCard = _eventSystem.drawCard();
+    if (currentCard != null && currentCard!.type == CardType.rare) {
+      AudioService.instance.playSfx(SfxType.cardRare);
+    } else {
+      AudioService.instance.playSfx(SfxType.cardDraw);
+    }
     _targetMarker.target = null;
     _notifyState();
   }
@@ -444,6 +456,7 @@ class DeliveryGame extends FlameGame
 
   void dismissParkingTicket() {
     if (currentParkingFine == null) return;
+    AudioService.instance.playSfx(SfxType.parkingTicket);
     _state = _state.copyWith(
       player: _state.player.copyWith(
         money: (_state.player.money - currentParkingFine!).clamp(0, 999999),
@@ -456,13 +469,17 @@ class DeliveryGame extends FlameGame
 
   void claimDailyMission(int index) {
     _state = _dailySystem.claimMission(_state, index);
+    AudioService.instance.playSfx(SfxType.coin);
     _notifyState();
   }
 
   void toggleMount() {
+    final willRide = !_state.player.isRiding;
     _state = _state.copyWith(
-      player: _state.player.copyWith(isRiding: !_state.player.isRiding),
+      player: _state.player.copyWith(isRiding: willRide),
     );
+    AudioService.instance.playSfx(
+        willRide ? SfxType.scooterStart : SfxType.scooterStop);
     _notifyState();
   }
 
@@ -475,6 +492,7 @@ class DeliveryGame extends FlameGame
         scooter: _state.player.scooter.upgrade(),
       ),
     );
+    AudioService.instance.playSfx(SfxType.coin);
     final result = _achievementChecker.check(_state);
     if (result.newlyEarned.isNotEmpty) {
       _state = _state.copyWith(player: result.player);
@@ -491,6 +509,7 @@ class DeliveryGame extends FlameGame
         bag: _state.player.bag.upgrade(),
       ),
     );
+    AudioService.instance.playSfx(SfxType.coin);
     final result = _achievementChecker.check(_state);
     if (result.newlyEarned.isNotEmpty) {
       _state = _state.copyWith(player: result.player);
@@ -521,6 +540,7 @@ class DeliveryGame extends FlameGame
     _orderSpawner.reset();
     _eventSystem.reset();
     _policeSystem.reset();
+    AudioService.instance.playSfx(SfxType.dayEnd);
     _notifyState();
   }
 
