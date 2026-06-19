@@ -28,11 +28,39 @@ class PlayerComponent extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
+    final halfW = size.x / 2;
+    final halfH = size.y / 2;
+
+    canvas.save();
+    canvas.translate(halfW, halfH);
+
+    // Rotate based on movement direction
+    // Default sprite faces right for scooter, down for walking
+    if (_isRiding) {
+      switch (_direction) {
+        case 0: canvas.rotate(pi / 2);   // down
+        case 1: canvas.rotate(pi);        // left
+        case 2: break;                    // right (default)
+        case 3: canvas.rotate(-pi / 2);  // up
+      }
+    } else {
+      switch (_direction) {
+        case 0: break;                    // down (default)
+        case 1: canvas.scale(-1, 1);     // left = mirror
+        case 2: break;                    // right (same as down for walk)
+        case 3: canvas.rotate(pi);        // up = flip
+      }
+    }
+
+    canvas.translate(-halfW, -halfH);
+
     if (_isRiding) {
       _renderScooter(canvas);
     } else {
       _renderWalking(canvas);
     }
+
+    canvas.restore();
   }
 
   void _renderWalking(Canvas canvas) {

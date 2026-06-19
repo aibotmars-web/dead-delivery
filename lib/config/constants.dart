@@ -6,7 +6,7 @@ class GameConfig {
   static const int mapWidth = 50;
   static const int mapHeight = 50;
   static const double tileSize = 16.0;
-  static const double scaleFactor = 2.0;
+  static const double scaleFactor = 3.0;
   static const double displayTileSize = tileSize * scaleFactor;
 
   // Player movement speed (tiles per second)
