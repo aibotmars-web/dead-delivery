@@ -63,7 +63,7 @@ class DeliveryGame extends FlameGame
     playerComponent = PlayerComponent(
       position: Vector2(
         GameConfig.mapWidth / 2 * GameConfig.displayTileSize,
-        GameConfig.mapHeight / 2 * GameConfig.displayTileSize,
+        GameConfig.mapHeight / 2 * GameConfig.displayTileY,
       ),
     );
     await world.add(playerComponent);
@@ -77,7 +77,7 @@ class DeliveryGame extends FlameGame
         0,
         0,
         GameConfig.mapWidth * GameConfig.displayTileSize,
-        GameConfig.mapHeight * GameConfig.displayTileSize,
+        GameConfig.mapHeight * GameConfig.displayTileY + GameConfig.displayTileSize * GameConfig.wallScale,
       ),
       considerViewport: true,
     );
@@ -110,7 +110,7 @@ class DeliveryGame extends FlameGame
     // Detect current tile for sidewalk mechanics
     final tileX = (playerComponent.position.x / GameConfig.displayTileSize)
         .floor().clamp(0, GameConfig.mapWidth - 1);
-    final tileY = (playerComponent.position.y / GameConfig.displayTileSize)
+    final tileY = (playerComponent.position.y / GameConfig.displayTileY)
         .floor().clamp(0, GameConfig.mapHeight - 1);
     final currentTile = mapComponent.getTileAt(tileX, tileY);
     final isOnSidewalk = currentTile == TileType.sidewalk;
@@ -327,7 +327,7 @@ class DeliveryGame extends FlameGame
     // Check parking line for red line ticket
     final ptx = (playerComponent.position.x / GameConfig.displayTileSize)
         .floor().clamp(0, GameConfig.mapWidth - 1);
-    final pty = (playerComponent.position.y / GameConfig.displayTileSize)
+    final pty = (playerComponent.position.y / GameConfig.displayTileY)
         .floor().clamp(0, GameConfig.mapHeight - 1);
     final parkingLine = mapComponent.getParkingLineAt(ptx, pty);
     final isRedLine = parkingLine == ParkingLine.red;
