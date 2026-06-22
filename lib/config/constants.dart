@@ -2,12 +2,18 @@
 // 台灣外送哥 - 遊戲常數
 
 class GameConfig {
-  // Map
-  static const int mapWidth = 50;
-  static const int mapHeight = 50;
+  // Map — scene-based (image background)
+  static const int sceneWidth = 1376;
+  static const int sceneHeight = 768;
+  static const double sceneScale = 2.0;
+  static const int mapWidth = 86; // sceneWidth / 16
+  static const int mapHeight = 48; // sceneHeight / 16
   static const double tileSize = 16.0;
-  static const double scaleFactor = 3.0;
-  static const double displayTileSize = tileSize * scaleFactor;
+  static const double scaleFactor = sceneScale;
+  static const double displayTileSize = tileSize * scaleFactor; // 32
+  static const double yCompress = 1.0;
+  static const double displayTileY = displayTileSize; // no compression
+  static const double wallScale = 0;
 
   // Player movement speed (tiles per second)
   static const double walkSpeed = 1.0;
